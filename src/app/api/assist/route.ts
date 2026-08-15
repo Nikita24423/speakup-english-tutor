@@ -1,4 +1,4 @@
-import { convertToModelMessages, generateText, type UIMessage } from "ai";
+import { generateText, type UIMessage } from "ai";
 import { resolveModel } from "@/lib/models";
 import { LEARNER_PROFILE, modeInstruction, type PracticeMode } from "@/lib/prompt";
 
@@ -12,6 +12,13 @@ type AssistBody = {
   model?: string;
   mode?: PracticeMode;
 };
+
+function uiMessageText(message: UIMessage): string {
+  return message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("");
+}
 
 export async function POST(req: Request) {
   if (!process.env.OPENROUTER_API_KEY) {
@@ -49,14 +56,20 @@ export async function POST(req: Request) {
 
   const result = await generateText({
     model: resolveModel(body.model),
-    system: `You write the learner's next answer in a practice conversation.
-Write only the answer the learner should say, in natural spoken English.
-Answer the interviewer's latest question directly, using only the verified profile and facts already present in the conversation.
-If a personal detail is unknown, say so briefly or keep the answer general. Never invent facts.
-Target B1-B2 English and 2-5 sentences. Do not add labels, notes, quotation marks, or corrections.
-${LEARNER_PROFILE}
-${modeInstruction(body.mode ?? "interview")}`,
-    messages: await convertToModelMessages(messages),
+    system: `You are a ghostwriter for Nikita, the job candidate. You never act as the interviewer or tutor.
+Return only Nikita's next spoken answer in natural B1-B2 English, with no label, question, notes, quotation marks or correction block.
+Directly answer the interviewer's latest question in 2-5 sentences. Use only verified facts. Never invent anything.
+
+${LEARNER_PROFILE}`,
+    prompt: `Practice mode: ${modeInstruction(body.mode ?? "interview")}
+
+Conversation transcript:
+${messages
+  .map((message) => `${message.role === "assistant" ? "Interviewer" : "Nikita"}: ${uiMessageText(message)}`)
+  .join("\n")}
+
+Write Nikita's answer now.
+Nikita's answer:`,
   });
 
   return Response.json({ text: result.text.trim() });
