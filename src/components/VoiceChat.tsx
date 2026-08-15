@@ -73,6 +73,7 @@ export function VoiceChat() {
 
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const listeningRef = useRef(false);
+  const spaceHeldRef = useRef(false);
   const lastSpokenId = useRef<string | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -217,6 +218,65 @@ export function VoiceChat() {
     if (listening) stopListening();
     else startListening();
   };
+
+  useEffect(() => {
+    const isTypingTarget = (target: EventTarget | null) =>
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      (target instanceof HTMLElement && target.isContentEditable);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.code !== "Space" ||
+        event.repeat ||
+        spaceHeldRef.current ||
+        isTypingTarget(event.target) ||
+        busy
+      ) {
+        return;
+      }
+      event.preventDefault();
+      spaceHeldRef.current = true;
+      startListening();
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || !spaceHeldRef.current) return;
+      event.preventDefault();
+      spaceHeldRef.current = false;
+      stopListening();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      spaceHeldRef.current = false;
+    };
+  }, [busy, startListening, stopListening]);
+
+  const renderSelectableText = (messageId: string, text: string) =>
+    text.split(/([A-Za-z]+(?:['’-][A-Za-z]+)*)/g).map((part, index) => {
+      if (!/^[A-Za-z]+(?:['’-][A-Za-z]+)*$/.test(part)) {
+        return <span key={`${messageId}-text-${index}`}>{part}</span>;
+      }
+      return (
+        <button
+          type="button"
+          className="word-token"
+          key={`${messageId}-word-${index}`}
+          onClick={() => {
+            setSelectedPhrase({ messageId, text: part, context: text });
+            setExplanation("");
+          }}
+          title={`Перевести «${part}»`}
+        >
+          {part}
+        </button>
+      );
+    });
 
   const reset = () => {
     stopListening();
@@ -367,7 +427,7 @@ export function VoiceChat() {
                 <span className="who">
                   {m.role === "user" ? "You" : "Tutor"}
                 </span>
-                <p>{text}</p>
+                <p>{renderSelectableText(m.id, text)}</p>
                 {selectedPhrase?.messageId === m.id && (
                   <div className="word-card">
                     <div className="word-card-head">
@@ -472,6 +532,9 @@ export function VoiceChat() {
                 : assisting === "suggest"
                   ? "Подбираю лучший ответ…"
                 : "Готов к разговору"}
+          </p>
+          <p className="shortcut-hint">
+            Удерживай Пробел для диктовки · Нажми на английское слово для перевода
           </p>
         </div>
       </main>
