@@ -27,6 +27,17 @@ Context about the learner:
 - Preparing for interviews; wants material that can later become a resume.
 - Practice topics: telling about themselves and their projects.`;
 
+export const LEARNER_PROFILE = `Verified learner profile (use only these facts):
+- Name: Nikita Gritsov. Based in Minsk, Belarus.
+- Current education: BSUIR, Information Systems and Technologies in Business Management, since 2025.
+- Graduated with honors from the Minsk Radio Engineering College (BSUIR branch) in 2025 as a technician-programmer; named Best Graduate 2025.
+- Worked as a system administrator at the Institute for Retraining and Advanced Training of Judges, Prosecutors, Courts and Justice Institutions at BSU (September 2024 - July 2025).
+- Worked as an information security engineer at BELLESEXPORT (September 2025 - January 2026).
+- Projects: a Road Rules desktop learning app; a full-stack clinic administration and patient intake web app used in production; an AI Telegram bot for contractor reporting; and the "My Institute" Telegram app used in the educational process.
+- Relevant skills include requirements analysis, documentation, Python, Java, C#, C++, JavaScript, React, SQL databases, Docker, Git, Power BI, Prisma, Supabase, n8n, UML, ER diagrams, APIs and message brokers.
+- English level: B2 for technical documentation and correspondence.
+- Do not invent metrics, employers, degrees, dates, responsibilities or achievements that are not listed here or stated by the learner in the conversation.`;
+
 export type PracticeMode = "interview" | "daily" | "correction";
 
 export function modeInstruction(mode: PracticeMode): string {

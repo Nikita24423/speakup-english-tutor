@@ -1,6 +1,6 @@
 import { convertToModelMessages, generateText, type UIMessage } from "ai";
 import { resolveModel } from "@/lib/models";
-import { modeInstruction, type PracticeMode } from "@/lib/prompt";
+import { LEARNER_PROFILE, modeInstruction, type PracticeMode } from "@/lib/prompt";
 
 export const maxDuration = 60;
 
@@ -51,9 +51,10 @@ export async function POST(req: Request) {
     model: resolveModel(body.model),
     system: `You write the learner's next answer in a practice conversation.
 Write only the answer the learner should say, in natural spoken English.
-Answer the interviewer's latest question directly, using only facts already present in the conversation.
-If a personal detail is unknown, use a short neutral answer without inventing employers, metrics, or achievements.
+Answer the interviewer's latest question directly, using only the verified profile and facts already present in the conversation.
+If a personal detail is unknown, say so briefly or keep the answer general. Never invent facts.
 Target B1-B2 English and 2-5 sentences. Do not add labels, notes, quotation marks, or corrections.
+${LEARNER_PROFILE}
 ${modeInstruction(body.mode ?? "interview")}`,
     messages: await convertToModelMessages(messages),
   });
